@@ -20,4 +20,13 @@ build/
 
 # OS Files
 .DS_Store
-Thumbs.db .worktrees/
+Thumbs.db
+
+# Git worktrees
+.worktrees/
+
+# Local development and testing
+inspector-config.json
+inspector.sh
+test-server.js
+claude_desktop_config.json

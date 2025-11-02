@@ -1,6 +1,6 @@
 {
-  "name": "shopify-mcp",
-  "version": "1.0.7",
+  "name": "@jean-paul/shopify-mcp",
+  "version": "1.1.2",
   "description": "MCP Server for Shopify API, enabling interaction with store data through GraphQL API",
   "main": "dist/index.js",
   "bin": "dist/index.js",
@@ -24,9 +24,8 @@
     "claude"
   ],
   "author": {
-    "name": "Your Name",
-    "email": "your.email@example.com",
-    "url": "https://your-website.com"
+    "name": "Jean Paul",
+    "email": "your.email@example.com"
   },
   "license": "MIT",
   "dependencies": {
@@ -54,12 +53,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/GeLi2001/shopify-mcp"
+    "url": "https://github.com/jean-paul/shopify-mcp"
   },
   "bugs": {
-    "url": "https://github.com/GeLi2001/shopify-mcp/issues"
+    "url": "https://github.com/jean-paul/shopify-mcp/issues"
   },
-  "homepage": "https://github.com/GeLi2001/shopify-mcp#readme",
+  "homepage": "https://github.com/jean-paul/shopify-mcp#readme",
   "engines": {
     "node": ">=18.0.0"
   }

@@ -1,9 +1,11 @@
 import type { GraphQLClient } from "graphql-request";
 import { gql } from "graphql-request";
 import { z } from "zod";
+import type { StoreManager } from "../stores/storeManager.js";
 
 // Input schema for getProducts
 const GetProductsInputSchema = z.object({
+  storeId: z.string().min(1).describe("The store ID to query"),
   searchTitle: z.string().optional(),
   limit: z.number().default(10)
 });
@@ -11,21 +13,24 @@ const GetProductsInputSchema = z.object({
 type GetProductsInput = z.infer<typeof GetProductsInputSchema>;
 
 // Will be initialized in index.ts
-let shopifyClient: GraphQLClient;
+let storeManager: StoreManager;
 
 const getProducts = {
   name: "get-products",
-  description: "Get all products or search by title",
+  description: "Get all products or search by title from a specific store",
   schema: GetProductsInputSchema,
 
-  // Add initialize method to set up the GraphQL client
-  initialize(client: GraphQLClient) {
-    shopifyClient = client;
+  // Add initialize method to set up the store manager
+  initialize(manager: StoreManager) {
+    storeManager = manager;
   },
 
   execute: async (input: GetProductsInput) => {
     try {
-      const { searchTitle, limit } = input;
+      const { storeId, searchTitle, limit } = input;
+
+      // Get the appropriate client for this store
+      const shopifyClient = storeManager.getClient(storeId);
 
       // Create query based on whether we're searching by title or not
       const query = gql`

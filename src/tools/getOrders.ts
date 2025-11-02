@@ -1,9 +1,11 @@
 import type { GraphQLClient } from "graphql-request";
 import { gql } from "graphql-request";
 import { z } from "zod";
+import type { StoreManager } from "../stores/storeManager.js";
 
 // Input schema for getOrders
 const GetOrdersInputSchema = z.object({
+  storeId: z.string().min(1).describe("The store ID to query"),
   status: z.enum(["any", "open", "closed", "cancelled"]).default("any"),
   limit: z.number().default(10)
 });
@@ -11,21 +13,24 @@ const GetOrdersInputSchema = z.object({
 type GetOrdersInput = z.infer<typeof GetOrdersInputSchema>;
 
 // Will be initialized in index.ts
-let shopifyClient: GraphQLClient;
+let storeManager: StoreManager;
 
 const getOrders = {
   name: "get-orders",
-  description: "Get orders with optional filtering by status",
+  description: "Get orders with optional filtering by status from a specific store",
   schema: GetOrdersInputSchema,
 
-  // Add initialize method to set up the GraphQL client
-  initialize(client: GraphQLClient) {
-    shopifyClient = client;
+  // Add initialize method to set up the store manager
+  initialize(manager: StoreManager) {
+    storeManager = manager;
   },
 
   execute: async (input: GetOrdersInput) => {
     try {
-      const { status, limit } = input;
+      const { storeId, status, limit } = input;
+
+      // Get the appropriate client for this store
+      const shopifyClient = storeManager.getClient(storeId);
 
       // Build query filters
       let queryFilter = "";

@@ -1,30 +1,35 @@
 import type { GraphQLClient } from "graphql-request";
 import { gql } from "graphql-request";
 import { z } from "zod";
+import type { StoreManager } from "../stores/storeManager.js";
 
 // Input schema for getProductById
 const GetProductByIdInputSchema = z.object({
+  storeId: z.string().min(1).describe("The store ID to query"),
   productId: z.string().min(1)
 });
 
 type GetProductByIdInput = z.infer<typeof GetProductByIdInputSchema>;
 
 // Will be initialized in index.ts
-let shopifyClient: GraphQLClient;
+let storeManager: StoreManager;
 
 const getProductById = {
   name: "get-product-by-id",
-  description: "Get a specific product by ID",
+  description: "Get a specific product by ID from a specific store",
   schema: GetProductByIdInputSchema,
 
-  // Add initialize method to set up the GraphQL client
-  initialize(client: GraphQLClient) {
-    shopifyClient = client;
+  // Add initialize method to set up the store manager
+  initialize(manager: StoreManager) {
+    storeManager = manager;
   },
 
   execute: async (input: GetProductByIdInput) => {
     try {
-      const { productId } = input;
+      const { storeId, productId } = input;
+
+      // Get the appropriate client for this store
+      const shopifyClient = storeManager.getClient(storeId);
 
       const query = gql`
         query GetProductById($id: ID!) {

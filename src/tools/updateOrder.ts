@@ -1,13 +1,15 @@
 import type { GraphQLClient } from "graphql-request";
 import { gql } from "graphql-request";
 import { z } from "zod";
+import type { StoreManager } from "../stores/storeManager.js";
 
 // Will be initialized in index.ts
-let shopifyClient: GraphQLClient;
+let storeManager: StoreManager;
 
 // Input schema for updateOrder
 // Based on https://shopify.dev/docs/api/admin-graphql/latest/mutations/orderupdate
 const UpdateOrderInputSchema = z.object({
+  storeId: z.string().min(1).describe("The store ID to update order in"),
   id: z.string().min(1),
   tags: z.array(z.string()).optional(),
   email: z.string().email().optional(),
@@ -51,18 +53,21 @@ type UpdateOrderInput = z.infer<typeof UpdateOrderInputSchema>;
 
 const updateOrder = {
   name: "update-order",
-  description: "Update an existing order with new information",
+  description: "Update an existing order with new information in a specific store",
   schema: UpdateOrderInputSchema,
 
-  // Add initialize method to set up the GraphQL client
-  initialize(client: GraphQLClient) {
-    shopifyClient = client;
+  // Add initialize method to set up the store manager
+  initialize(manager: StoreManager) {
+    storeManager = manager;
   },
 
   execute: async (input: UpdateOrderInput) => {
     try {
       // Prepare input for GraphQL mutation
-      const { id, ...orderFields } = input;
+      const { storeId, id, ...orderFields } = input;
+
+      // Get the appropriate client for this store
+      const shopifyClient = storeManager.getClient(storeId);
 
       const query = gql`
         mutation orderUpdate($input: OrderInput!) {

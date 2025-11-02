@@ -1,9 +1,11 @@
 import type { GraphQLClient } from "graphql-request";
 import { gql } from "graphql-request";
 import { z } from "zod";
+import type { StoreManager } from "../stores/storeManager.js";
 
 // Input schema for updating a customer
 const UpdateCustomerInputSchema = z.object({
+  storeId: z.string().min(1).describe("The store ID to update customer in"),
   id: z.string().regex(/^\d+$/, "Customer ID must be numeric"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
@@ -30,21 +32,24 @@ const UpdateCustomerInputSchema = z.object({
 type UpdateCustomerInput = z.infer<typeof UpdateCustomerInputSchema>;
 
 // Will be initialized in index.ts
-let shopifyClient: GraphQLClient;
+let storeManager: StoreManager;
 
 const updateCustomer = {
   name: "update-customer",
-  description: "Update a customer's information",
+  description: "Update a customer's information in a specific store",
   schema: UpdateCustomerInputSchema,
 
-  // Add initialize method to set up the GraphQL client
-  initialize(client: GraphQLClient) {
-    shopifyClient = client;
+  // Add initialize method to set up the store manager
+  initialize(manager: StoreManager) {
+    storeManager = manager;
   },
 
   execute: async (input: UpdateCustomerInput) => {
     try {
-      const { id, acceptsMarketing, ...customerFields } = input;
+      const { storeId, id, acceptsMarketing, ...customerFields } = input;
+
+      // Get the appropriate client for this store
+      const shopifyClient = storeManager.getClient(storeId);
 
       // Convert numeric ID to GID format
       const customerGid = `gid://shopify/Customer/${id}`;
