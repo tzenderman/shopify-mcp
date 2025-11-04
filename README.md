@@ -2,8 +2,8 @@
 
 MCP Server for Shopify API, enabling interaction with store data through GraphQL API. This server provides tools for managing products, customers, orders, and more.
 
-**📦 Package Name: `@jean-paul/shopify-mcp`**
-**🚀 NPX Command: `npx @jean-paul/shopify-mcp`**
+**📦 Package Name: `@tzenderman/shopify-mcp`**
+**🚀 NPX Command: `npx @tzenderman/shopify-mcp`**
 
 > **✅ Fully API Compliant**: All 26 tools have been validated against the Shopify Admin GraphQL API specification to ensure compatibility and reliability.
 
@@ -55,7 +55,7 @@ To manage Shopify stores, add this to your `claude_desktop_config.json`:
     "shopify": {
       "command": "npx",
       "args": [
-        "@jean-paul/shopify-mcp",
+        "@tzenderman/shopify-mcp",
         "--stores",
         "[{\"id\":\"store1\",\"domain\":\"store1.myshopify.com\",\"accessToken\":\"token1\"},{\"id\":\"store2\",\"domain\":\"store2.myshopify.com\",\"accessToken\":\"token2\"},{\"id\":\"store3\",\"domain\":\"store3.myshopify.com\",\"accessToken\":\"token3\"}]"
       ]
@@ -79,7 +79,7 @@ All tools require a `storeId` parameter to specify which store to interact with.
     "shopify": {
       "command": "npx",
       "args": [
-        "@jean-paul/shopify-mcp",
+        "@tzenderman/shopify-mcp",
         "--stores",
         "[{\"id\":\"my-store\",\"domain\":\"my-store.myshopify.com\",\"accessToken\":\"<YOUR_ACCESS_TOKEN>\"}]"
       ]
@@ -114,7 +114,7 @@ MYSHOPIFY_DOMAIN=your-store.myshopify.com
 
 Then run:
 ```
-npx @jean-paul/shopify-mcp
+npx @tzenderman/shopify-mcp
 ```
 
 ### Direct Installation (Optional)
@@ -122,13 +122,13 @@ npx @jean-paul/shopify-mcp
 If you want to install the package globally:
 
 ```
-npm install -g @jean-paul/shopify-mcp
+npm install -g @tzenderman/shopify-mcp
 ```
 
 Then run it with the multi-store format:
 
 ```
-@jean-paul/shopify-mcp --stores='[{"id":"my-store","domain":"my-store.myshopify.com","accessToken":"<YOUR_ACCESS_TOKEN>"}]'
+@tzenderman/shopify-mcp --stores='[{"id":"my-store","domain":"my-store.myshopify.com","accessToken":"<YOUR_ACCESS_TOKEN>"}]'
 ```
 
 ## Available Tools
@@ -438,7 +438,7 @@ To contribute or modify this project:
 
 ```bash
 # Clone the repository
-git clone https://github.com/jean-paul/shopify-mcp.git
+git clone https://github.com/tzenderman/shopify-mcp.git
 cd shopify-mcp
 
 # Install dependencies
