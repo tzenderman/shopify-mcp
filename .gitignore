@@ -30,3 +30,6 @@ inspector-config.json
 inspector.sh
 test-server.js
 claude_desktop_config.json
+
+# Deployment notes (local only)
+DEPLOY_TO_NPM.md

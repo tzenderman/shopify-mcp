@@ -5,7 +5,7 @@ MCP Server for Shopify API, enabling interaction with store data through GraphQL
 **📦 Package Name: `@tzenderman/shopify-mcp`**
 **🚀 NPX Command: `npx @tzenderman/shopify-mcp`**
 
-> **✅ Fully API Compliant**: All 26 tools have been validated against the Shopify Admin GraphQL API specification to ensure compatibility and reliability.
+> **✅ Fully API Compliant**: All 34 tools have been validated against the Shopify Admin GraphQL API specification to ensure compatibility and reliability.
 
 ## Features
 
@@ -155,11 +155,17 @@ Then run it with the multi-store format:
 ### Product Management
 
 1. `get-products`
-   - Get all products or search by title from a specific store
+   - Get all products or search by title or SKU from a specific store
+   - Supports three modes: search by title, search by SKU, or get all products
    - Inputs:
      - `storeId` (string, required): The store ID to query
-     - `searchTitle` (optional string): Filter products by title
+     - `searchTitle` (string, optional): Search products by title (supports wildcards). Example: 'shirt' finds products with 'shirt' in the title
+     - `searchSku` (string, optional): Search products by variant SKU (supports wildcards with *). Examples: 'ABC-123' for exact match, or 'ABC-*' to find all SKUs starting with 'ABC-'. When provided, searchTitle is ignored
      - `limit` (number, default: 10): Maximum number of products to return
+   - Returns:
+     - When searching by SKU: Products with `matchedVariants` array containing variants that matched the search
+     - When searching by title or getting all: Products with `variants` array (first 5 variants per product)
+     - `searchMode` field indicates which mode was used: 'sku', 'title', or 'all'
 
 2. `get-product-by-id`
    - Get a specific product by ID from a specific store
@@ -247,7 +253,22 @@ Then run it with the multi-store format:
 
 ### Collection Management
 
-1. `create-collection`
+1. `get-collections`
+    - Get all collections or search collections from a specific store
+    - Inputs:
+        - `storeId` (string, required): The store ID to query
+        - `query` (string, optional): Search query to filter collections
+        - `limit` (number, default: 10): Number of collections to retrieve
+    - Returns: Collections with product count, rules, images, and pagination info
+
+2. `get-collection-by-id`
+    - Get a single collection by ID from a specific store
+    - Inputs:
+        - `storeId` (string, required): The store ID to query
+        - `collectionId` (string, required): Collection ID (GID format: gid://shopify/Collection/...)
+    - Returns: Full collection details including SEO, products (first 10), and rules
+
+3. `create-collection`
     - Create a new collection (manual or automated/smart)
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -269,12 +290,12 @@ Then run it with the multi-store format:
         - `templateSuffix` (string, optional): Template suffix
     - Note: Collection is unpublished by default. Use `publishablePublish` mutation to publish.
 
-2. `update-collection`
+4. `update-collection`
     - Update an existing collection
     - Inputs: Same as create-collection, plus:
         - `id` (string, required): Collection ID (GID format)
 
-3. `add-products-to-collection`
+5. `add-products-to-collection`
     - Add products to a manual collection (asynchronous operation)
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -283,7 +304,7 @@ Then run it with the multi-store format:
     - Returns: Job object with `id` and `done` status for tracking the async operation
     - Note: Uses `collectionAddProductsV2` mutation which processes asynchronously
 
-4. `remove-products-from-collection`
+6. `remove-products-from-collection`
     - Remove products from a manual collection (asynchronous operation)
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -301,7 +322,28 @@ Then run it with the multi-store format:
      - `searchQuery` (optional string): Filter customers by name or email
      - `limit` (optional number, default: 10): Maximum number of customers to return
 
-2. `update-customer`
+2. `get-customer-by-id`
+   - Get a single customer by ID with detailed information
+   - Inputs:
+     - `storeId` (string, required): The store ID to query
+     - `customerId` (string, required): Customer ID (GID format: gid://shopify/Customer/...)
+   - Returns: Full customer details including addresses, state, tax exemption, spending history, and recent orders (first 10)
+
+3. `create-customer`
+   - Create a new customer in a specific store
+   - Inputs:
+     - `storeId` (string, required): The store ID
+     - `firstName` (string, required): Customer's first name
+     - `lastName` (string, required): Customer's last name
+     - `email` (string, required): Customer's email address
+     - `phone` (string, optional): Customer's phone number
+     - `tags` (array of strings, optional): Tags to associate with the customer
+     - `note` (string, optional): Note about the customer
+     - `taxExempt` (boolean, optional): Whether the customer is exempt from taxes
+     - `addresses` (array of objects, optional): Customer addresses with address1, address2, city, country, province, zip, etc.
+     - `metafields` (array of objects, optional): Metafields to associate with the customer
+
+4. `update-customer`
    - Update a customer's information in a specific store
    - Inputs:
      - `storeId` (string, required): The store ID to update customer in
@@ -315,7 +357,7 @@ Then run it with the multi-store format:
      - `taxExempt` (boolean, optional): Whether the customer is exempt from taxes
      - `metafields` (array of objects, optional): Customer metafields for storing additional data
 
-3. `get-customer-orders`
+5. `get-customer-orders`
    - Get orders for a specific customer from a specific store
    - Inputs:
      - `storeId` (string, required): The store ID to query
@@ -351,7 +393,22 @@ Then run it with the multi-store format:
 
 ### Draft Order Management
 
-1. `create-draft-order`
+1. `get-draft-orders`
+    - Get all draft orders or search draft orders from a specific store
+    - Inputs:
+        - `storeId` (string, required): The store ID to query
+        - `query` (string, optional): Search query to filter draft orders
+        - `limit` (number, default: 10): Number of draft orders to retrieve
+    - Returns: Draft orders with line items (first 10), customer info, and pagination info
+
+2. `get-draft-order-by-id`
+    - Get a single draft order by ID from a specific store
+    - Inputs:
+        - `storeId` (string, required): The store ID to query
+        - `draftOrderId` (string, required): Draft Order ID (GID format: gid://shopify/DraftOrder/...)
+    - Returns: Complete draft order details including line items (first 50), addresses, shipping, discounts, and full pricing breakdown
+
+3. `create-draft-order`
     - Create a new draft order
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -366,14 +423,28 @@ Then run it with the multi-store format:
         - `taxExempt` (boolean, optional): Tax exemption status
         - `shippingLine` (object, optional): Shipping details
 
-2. `update-draft-order`
+4. `update-draft-order`
     - Update an existing draft order
     - Inputs: Same as create-draft-order, plus:
         - `id` (string, required): Draft Order ID (GID format)
 
 ### Menu Management
 
-1. `create-menu`
+1. `get-menus`
+    - Get all navigation menus from a specific store
+    - Inputs:
+        - `storeId` (string, required): The store ID to query
+        - `limit` (number, default: 10): Number of menus to retrieve
+    - Returns: Menus with nested items (up to 3 levels) and pagination info
+
+2. `get-menu`
+    - Get a single navigation menu by ID from a specific store
+    - Inputs:
+        - `storeId` (string, required): The store ID to query
+        - `menuId` (string, required): Menu ID (GID format: gid://shopify/Menu/...)
+    - Returns: Complete menu structure with nested items (up to 3 levels deep)
+
+3. `create-menu`
     - Create a new navigation menu
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -388,7 +459,7 @@ Then run it with the multi-store format:
             - `tags` (array of strings, optional): Tags to filter a collection
             - `items` (array, optional): Nested menu items for submenus
 
-2. `update-menu`
+4. `update-menu`
     - Update an existing navigation menu
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -399,7 +470,7 @@ Then run it with the multi-store format:
           - Same structure as create-menu items, plus:
             - `id` (string, optional): Menu item ID (GID format) - for updating existing items
 
-3. `delete-menu`
+5. `delete-menu`
     - Delete a navigation menu
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -417,11 +488,9 @@ tail -n 20 -f ~/Library/Logs/Claude/mcp*.log
 
 This server has been thoroughly validated against the Shopify Admin GraphQL API specification:
 
-- ✅ **26 tools validated** - All GraphQL operations comply with current Shopify Admin API
+- ✅ **34 tools validated** - All GraphQL operations comply with current Shopify Admin API
 - ✅ **API version 2023-07** - Default version, configurable per store
 - ✅ **Comprehensive validation** - All mutations and queries have been verified using Shopify's schema validation tools
-
-For detailed API compliance information, see [API_COMPLIANCE_REPORT.md](./API_COMPLIANCE_REPORT.md).
 
 ### Key API Changes Implemented
 
@@ -456,7 +525,6 @@ npm run dev
 - `src/index.ts` - Main server initialization and tool registration
 - `src/stores/` - Store management and configuration parsing
 - `src/tools/` - Individual tool implementations for Shopify operations
-- `API_COMPLIANCE_REPORT.md` - Detailed validation results and API compliance notes
 
 ## License
 
