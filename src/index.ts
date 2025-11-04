@@ -13,6 +13,8 @@ import { parseStoreConfigs } from "./stores/configParser.js";
 // Import tools
 import { getCustomerOrders } from "./tools/getCustomerOrders.js";
 import { getCustomers } from "./tools/getCustomers.js";
+import { getCustomerById } from "./tools/getCustomerById.js";
+import { createCustomer } from "./tools/createCustomer.js";
 import { getOrderById } from "./tools/getOrderById.js";
 import { getOrders } from "./tools/getOrders.js";
 import { getProductById } from "./tools/getProductById.js";
@@ -26,15 +28,21 @@ import { updateProductVariant } from "./tools/updateProductVariant.js";
 import { createProductImage } from "./tools/createProductImage.js";
 import { updateProductImage } from "./tools/updateProductImage.js";
 import { deleteProductImage } from "./tools/deleteProductImage.js";
+import { getCollections } from "./tools/getCollections.js";
+import { getCollectionById } from "./tools/getCollectionById.js";
 import { createCollection } from "./tools/createCollection.js";
 import { updateCollection } from "./tools/updateCollection.js";
 import { addProductsToCollection } from "./tools/addProductsToCollection.js";
 import { removeProductsFromCollection } from "./tools/removeProductsFromCollection.js";
+import { getDraftOrders } from "./tools/getDraftOrders.js";
+import { getDraftOrderById } from "./tools/getDraftOrderById.js";
 import { createDraftOrder } from "./tools/createDraftOrder.js";
 import { updateDraftOrder } from "./tools/updateDraftOrder.js";
 import { createMenu } from "./tools/createMenu.js";
 import { updateMenu } from "./tools/updateMenu.js";
 import { deleteMenu } from "./tools/deleteMenu.js";
+import { getMenu } from "./tools/getMenu.js";
+import { getMenus } from "./tools/getMenus.js";
 import { getJobStatus } from "./tools/getJobStatus.js";
 
 // Parse command line arguments
@@ -64,6 +72,8 @@ for (const store of storeManager.listStores()) {
 getProducts.initialize(storeManager);
 getProductById.initialize(storeManager);
 getCustomers.initialize(storeManager);
+getCustomerById.initialize(storeManager);
+createCustomer.initialize(storeManager);
 getOrders.initialize(storeManager);
 getOrderById.initialize(storeManager);
 updateOrder.initialize(storeManager);
@@ -76,15 +86,21 @@ updateProductVariant.initialize(storeManager);
 createProductImage.initialize(storeManager);
 updateProductImage.initialize(storeManager);
 deleteProductImage.initialize(storeManager);
+getCollections.initialize(storeManager);
+getCollectionById.initialize(storeManager);
 createCollection.initialize(storeManager);
 updateCollection.initialize(storeManager);
 addProductsToCollection.initialize(storeManager);
 removeProductsFromCollection.initialize(storeManager);
+getDraftOrders.initialize(storeManager);
+getDraftOrderById.initialize(storeManager);
 createDraftOrder.initialize(storeManager);
 updateDraftOrder.initialize(storeManager);
 createMenu.initialize(storeManager);
 updateMenu.initialize(storeManager);
 deleteMenu.initialize(storeManager);
+getMenu.initialize(storeManager);
+getMenus.initialize(storeManager);
 getJobStatus.initialize(storeManager);
 
 // Set up MCP server
@@ -98,11 +114,7 @@ const server = new McpServer({
 // Add tools individually, using their schemas directly
 server.tool(
   "get-products",
-  {
-    storeId: z.string().min(1).describe("The store ID to query"),
-    searchTitle: z.string().optional(),
-    limit: z.number().default(10)
-  },
+  getProducts.schema.shape,
   async (args) => {
     const result = await getProducts.execute(args);
     return {
@@ -134,6 +146,28 @@ server.tool(
   },
   async (args) => {
     const result = await getCustomers.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "get-customer-by-id",
+  getCustomerById.schema.shape,
+  async (args) => {
+    const result = await getCustomerById.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "create-customer",
+  createCustomer.schema.shape,
+  async (args) => {
+    const result = await createCustomer.execute(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };
@@ -395,6 +429,30 @@ server.tool(
   }
 );
 
+// Add the getCollections tool
+server.tool(
+  "get-collections",
+  getCollections.schema.shape,
+  async (args) => {
+    const result = await getCollections.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+// Add the getCollectionById tool
+server.tool(
+  "get-collection-by-id",
+  getCollectionById.schema.shape,
+  async (args) => {
+    const result = await getCollectionById.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
 // Add the createCollection tool
 server.tool(
   "create-collection",
@@ -437,6 +495,30 @@ server.tool(
   removeProductsFromCollection.schema.shape,
   async (args) => {
     const result = await removeProductsFromCollection.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+// Add the getDraftOrders tool
+server.tool(
+  "get-draft-orders",
+  getDraftOrders.schema.shape,
+  async (args) => {
+    const result = await getDraftOrders.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+// Add the getDraftOrderById tool
+server.tool(
+  "get-draft-order-by-id",
+  getDraftOrderById.schema.shape,
+  async (args) => {
+    const result = await getDraftOrderById.execute(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };
@@ -497,6 +579,30 @@ server.tool(
   deleteMenu.schema.shape,
   async (args) => {
     const result = await deleteMenu.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+// Add the getMenu tool
+server.tool(
+  "get-menu",
+  getMenu.schema.shape,
+  async (args) => {
+    const result = await getMenu.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+// Add the getMenus tool
+server.tool(
+  "get-menus",
+  getMenus.schema.shape,
+  async (args) => {
+    const result = await getMenus.execute(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };
