@@ -33,3 +33,21 @@ claude_desktop_config.json
 
 # Deployment notes (local only)
 DEPLOY_TO_NPM.md
+
+# Deployment-specific configurations (not for public package)
+render.yaml
+heroku.yml
+docker-compose.yml
+Dockerfile
+.dockerignore
+fly.toml
+railway.json
+vercel.json
+
+# Backup files from sed operations
+*.bak
+*.bak2
+*.bak3
+*.bak4
+*.bak5
+*.bak6

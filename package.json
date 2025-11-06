@@ -8,7 +8,9 @@
   "scripts": {
     "build": "rimraf dist && tsc",
     "start": "node dist/index.js",
+    "start:http": "node dist/http-server.js",
     "dev": "node --loader ts-node/esm src/index.ts",
+    "dev:http": "node --loader ts-node/esm src/http-server.ts",
     "test": "jest",
     "prepublishOnly": "npm run build",
     "lint": "eslint 'src/**/*.ts'",
@@ -30,13 +32,17 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.0.3",
+    "express": "^5.0.1",
     "graphql": "^16.6.0",
     "graphql-request": "^5.1.0",
     "minimist": "^1.2.8",
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "@types/jest": "^29.5.0",
     "@types/minimist": "^1.2.2",
     "@types/node": "^18.15.11",
@@ -49,6 +55,8 @@
   "files": [
     "dist",
     "README.md",
+    "REMOTE_SERVER.md",
+    ".env.example",
     "LICENSE"
   ],
   "repository": {

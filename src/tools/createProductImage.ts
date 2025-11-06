@@ -1,19 +1,28 @@
 import type { GraphQLClient } from "graphql-request";
 import { gql } from "graphql-request";
 import { z } from "zod";
+import { readFile } from "fs/promises";
+import { resolve } from "path";
 import type { StoreManager } from "../stores/storeManager.js";
 
-// Input schema for creating a product image
-const CreateProductImageInputSchema = z.object({
+// Base schema shape (for MCP tool registration)
+const CreateProductImageInputShape = {
   storeId: z.string().min(1).describe("The store ID to create image in"),
   productId: z.string().min(1).describe("Product ID (GID format: gid://shopify/Product/...)"),
   src: z.string().optional().describe("URL of the image (for URL-based images)"),
+  filePath: z.string().optional().describe("Local file path to the image (most token-efficient method)"),
   attachment: z.string().optional().describe("Base64-encoded image data (for direct upload)"),
   altText: z.string().optional().describe("Alt text for the image"),
-  filename: z.string().optional().describe("Filename for the image (required when using attachment)"),
-}).refine((data) => data.src || data.attachment, {
-  message: "Either src (URL) or attachment (base64 data) must be provided",
-});
+  filename: z.string().optional().describe("Filename for the image (optional, will be inferred from filePath if not provided)"),
+};
+
+// Full schema with validation (for runtime validation)
+const CreateProductImageInputSchema = z.object(CreateProductImageInputShape).refine(
+  (data) => data.src || data.attachment || data.filePath,
+  {
+    message: "Either src (URL), filePath (local file), or attachment (base64 data) must be provided",
+  }
+);
 
 type CreateProductImageInput = z.infer<typeof CreateProductImageInputSchema>;
 
@@ -37,8 +46,36 @@ const createProductImage = {
       // Get the appropriate client for this store
       const shopifyClient = storeManager.getClient(storeId);
 
+      // Handle filePath: read file and convert to base64
+      let base64Data: string | undefined = imageInput.attachment;
+      let inferredFilename: string | undefined = imageInput.filename;
+
+      if (imageInput.filePath) {
+        try {
+          // Resolve the file path (handles relative paths)
+          const absolutePath = resolve(imageInput.filePath);
+
+          // Read the file
+          const fileBuffer = await readFile(absolutePath);
+
+          // Convert to base64
+          base64Data = fileBuffer.toString('base64');
+
+          // Infer filename from path if not provided
+          if (!inferredFilename) {
+            inferredFilename = absolutePath.split('/').pop() || 'image';
+          }
+        } catch (fileError) {
+          throw new Error(
+            `Failed to read file at path "${imageInput.filePath}": ${
+              fileError instanceof Error ? fileError.message : String(fileError)
+            }`
+          );
+        }
+      }
+
       // Use productCreateMedia for base64 uploads, productAppendImages for URLs
-      if (imageInput.attachment) {
+      if (base64Data) {
         // Base64 upload
         const query = gql`
           mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
@@ -64,7 +101,7 @@ const createProductImage = {
           productId,
           media: [
             {
-              originalSource: imageInput.attachment,
+              originalSource: base64Data,
               alt: imageInput.altText || "",
               mediaContentType: "IMAGE",
             },
@@ -154,4 +191,4 @@ const createProductImage = {
   },
 };
 
-export { createProductImage };
+export { createProductImage, CreateProductImageInputShape };

@@ -7,6 +7,11 @@ MCP Server for Shopify API, enabling interaction with store data through GraphQL
 
 > **✅ Fully API Compliant**: All 34 tools have been validated against the Shopify Admin GraphQL API specification to ensure compatibility and reliability.
 
+**🌐 Deployment Modes**: Now supports both local (stdio) and remote (HTTP) deployment:
+- **Local Mode**: Run directly in Claude Desktop via stdio transport
+- **Remote Mode**: Deploy as an HTTP server with OAuth 2.0 authentication on Render, Heroku, etc.
+- **Documentation**: See [REMOTE_SERVER.md](REMOTE_SERVER.md) for remote deployment guide
+
 ## Features
 
 - **Multi-Store Support**: Manage multiple Shopify stores from a single MCP server instance
@@ -135,6 +140,31 @@ Then run it with the multi-store format:
 
 **Note:** All tools (except `list-stores`) require a `storeId` parameter to specify which store to interact with.
 
+### Image Upload Best Practices
+
+When uploading product images using the `create-product-image` tool, you have three options:
+
+1. **File Path (Most Token-Efficient)**: Provide the local file path
+   - When you drag-and-drop an image into Claude, acknowledge the image but provide the file path instead
+   - Example: `/Users/username/Downloads/product-photo.jpg`
+   - The MCP server reads the file directly, using minimal tokens
+
+2. **External URL**: Provide a URL to an image hosted elsewhere
+   - Example: `https://example.com/images/product.jpg`
+   - Most efficient if the image is already hosted online
+
+3. **Base64 (Fallback)**: Provide base64-encoded data
+   - Uses significantly more tokens (~33% larger than binary)
+   - Only recommended when file path is not available
+
+**Recommended workflow in Claude Desktop:**
+```
+User: [drags image into chat]
+Claude: "I can see the image. To upload it efficiently, what's the file path?"
+User: "/Users/timz/Downloads/product-photo.jpg"
+Claude: [uses filePath parameter to upload]
+```
+
 ### Store Management
 
 1. `list-stores`
@@ -226,15 +256,17 @@ Then run it with the multi-store format:
         - `taxable` (boolean, optional): Whether the variant is taxable
 
 7. `create-product-image`
-    - Create a new image for a product (supports URL or base64 upload)
+    - Create a new image for a product (supports URL, file path, or base64 upload)
     - Inputs:
         - `storeId` (string, required): The store ID
         - `productId` (string, required): Product ID (GID format)
-        - `src` (string, optional): URL of the image
-        - `attachment` (string, optional): Base64-encoded image data
+        - `src` (string, optional): URL of the image (external URL)
+        - `filePath` (string, optional): Local file path to the image (most token-efficient)
+        - `attachment` (string, optional): Base64-encoded image data (for backward compatibility)
         - `altText` (string, optional): Alt text for the image
-        - `filename` (string, optional): Filename (required when using attachment)
-    - Note: Either `src` or `attachment` must be provided
+        - `filename` (string, optional): Filename (optional, inferred from filePath if not provided)
+    - Note: Either `src`, `filePath`, or `attachment` must be provided
+    - **Recommended**: Use `filePath` for best token efficiency. When you drag-and-drop an image into Claude, provide the local file path instead of using the base64 data.
 
 8. `update-product-image`
     - Update an existing product image's properties
