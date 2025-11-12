@@ -44,6 +44,7 @@ import { deleteMenu } from "./tools/deleteMenu.js";
 import { getMenu } from "./tools/getMenu.js";
 import { getMenus } from "./tools/getMenus.js";
 import { getJobStatus } from "./tools/getJobStatus.js";
+import { getVariantsBySkus } from "./tools/getVariantsBySkus.js";
 
 /**
  * Create and configure the Shopify MCP server with all tools registered.
@@ -107,6 +108,7 @@ export function createShopifyMcpServer(): McpServer {
   getMenu.initialize(storeManager);
   getMenus.initialize(storeManager);
   getJobStatus.initialize(storeManager);
+  getVariantsBySkus.initialize(storeManager);
 
   // Set up MCP server
   const server = new McpServer({
@@ -613,6 +615,18 @@ export function createShopifyMcpServer(): McpServer {
   getJobStatus.schema.shape,
     async (args) => {
     const result = await getJobStatus.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+    }
+);
+
+// Add the getVariantsBySkus tool
+  server.tool(
+    "get-variants-by-skus",
+  getVariantsBySkus.schema.shape,
+    async (args) => {
+    const result = await getVariantsBySkus.execute(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };

@@ -5,7 +5,7 @@ MCP Server for Shopify API, enabling interaction with store data through GraphQL
 **📦 Package Name: `@tzenderman/shopify-mcp`**
 **🚀 NPX Command: `npx @tzenderman/shopify-mcp`**
 
-> **✅ Fully API Compliant**: All 34 tools have been validated against the Shopify Admin GraphQL API specification to ensure compatibility and reliability.
+> **✅ Fully API Compliant**: All 35 tools have been validated against the Shopify Admin GraphQL API specification to ensure compatibility and reliability.
 
 **🌐 Deployment Modes**: Now supports both local (stdio) and remote (HTTP) deployment:
 - **Local Mode**: Run directly in Claude Desktop via stdio transport
@@ -197,13 +197,26 @@ Claude: [uses filePath parameter to upload]
      - When searching by title or getting all: Products with `variants` array (first 5 variants per product)
      - `searchMode` field indicates which mode was used: 'sku', 'title', or 'all'
 
-2. `get-product-by-id`
+2. `get-variants-by-skus`
+   - Efficiently fetch multiple product variants by their SKUs in a single API call
+   - Optimized for batch operations like creating draft orders with many line items
+   - Inputs:
+     - `storeId` (string, required): The store ID to query
+     - `skus` (array of strings, required): Array of SKUs to search for (max 250 per request)
+   - Returns:
+     - `variants`: Object mapping each SKU to its variant details (variantId, price, inventory, product info)
+     - `summary`: Object with `requested`, `found`, and `notFound` counts
+     - `notFoundSkus`: Array of SKUs that were not found in the store
+   - Example usage: Reduce N API calls to 1 when creating draft orders with multiple products
+   - Note: Maximum 250 SKUs per request due to GraphQL query limits
+
+3. `get-product-by-id`
    - Get a specific product by ID from a specific store
    - Inputs:
      - `storeId` (string, required): The store ID to query
      - `productId` (string): ID of the product to retrieve
 
-3. `create-product`
+4. `create-product`
     - Create new product in a specific store
     - Inputs:
         - `storeId` (string, required): The store ID to create product in
@@ -214,7 +227,7 @@ Claude: [uses filePath parameter to upload]
         - `tags` (array of strings, optional): Tags of the product
         - `status` (string, optional): Status of the product "ACTIVE", "DRAFT", "ARCHIVED". Default "DRAFT"
 
-4. `update-product`
+5. `update-product`
     - Update an existing product's information
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -226,7 +239,7 @@ Claude: [uses filePath parameter to upload]
         - `tags` (array of strings, optional): Tags of the product
         - `status` (string, optional): Status of the product
 
-5. `create-product-variant`
+6. `create-product-variant`
     - Create a new variant for an existing product
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -240,7 +253,7 @@ Claude: [uses filePath parameter to upload]
         - `optionValues` (array of objects, optional): Variant option values with option names (format: `[{optionName: "Size", name: "Large"}]`)
         - `taxable` (boolean, optional): Whether the variant is taxable
 
-6. `update-product-variant`
+7. `update-product-variant`
     - Update an existing product variant
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -255,7 +268,7 @@ Claude: [uses filePath parameter to upload]
         - `optionValues` (array of objects, optional): Variant option values with option names
         - `taxable` (boolean, optional): Whether the variant is taxable
 
-7. `create-product-image`
+8. `create-product-image`
     - Create a new image for a product (supports URL, file path, or base64 upload)
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -268,7 +281,7 @@ Claude: [uses filePath parameter to upload]
     - Note: Either `src`, `filePath`, or `attachment` must be provided
     - **Recommended**: Use `filePath` for best token efficiency. When you drag-and-drop an image into Claude, provide the local file path instead of using the base64 data.
 
-8. `update-product-image`
+9. `update-product-image`
     - Update an existing product image's properties
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -276,7 +289,7 @@ Claude: [uses filePath parameter to upload]
         - `id` (string, required): Image ID (GID format)
         - `altText` (string, optional): Alt text for the image
 
-9. `delete-product-image`
+10. `delete-product-image`
     - Delete a product image
     - Inputs:
         - `storeId` (string, required): The store ID
@@ -510,17 +523,78 @@ Claude: [uses filePath parameter to upload]
 
 ## Debugging
 
+### Viewing MCP Logs
+
 If you encounter issues, check Claude Desktop's MCP logs:
 
-```
+```bash
 tail -n 20 -f ~/Library/Logs/Claude/mcp*.log
 ```
+
+### Debug Logging
+
+To enable detailed debug logging, set the `DEBUG` environment variable to `true` in your Claude Desktop config:
+
+```json
+{
+  "mcpServers": {
+    "shopify": {
+      "command": "npx",
+      "args": [
+        "@tzenderman/shopify-mcp",
+        "--stores",
+        "[{\"id\":\"store1\",\"domain\":\"store1.myshopify.com\",\"accessToken\":\"token1\"}]"
+      ],
+      "env": {
+        "DEBUG": "true"
+      }
+    }
+  }
+}
+```
+
+Debug logging will show:
+- Request start/completion timestamps
+- GraphQL query variables
+- Detailed error information
+- Permission-related errors
+
+### Request Timeout Configuration
+
+By default, GraphQL requests timeout after 30 seconds. You can customize this with the `GRAPHQL_TIMEOUT_MS` environment variable:
+
+```json
+{
+  "mcpServers": {
+    "shopify": {
+      "command": "npx",
+      "args": ["@tzenderman/shopify-mcp", "--stores", "[...]"],
+      "env": {
+        "GRAPHQL_TIMEOUT_MS": "60000"
+      }
+    }
+  }
+}
+```
+
+### Common Issues
+
+**Request hangs or times out:**
+- Check that your Shopify app has the required API scopes (see [Installation](#installation))
+- Verify your access token is valid
+- Check network connectivity to Shopify
+- Enable `DEBUG=true` to see detailed request logs
+
+**Permission errors:**
+- Errors will indicate which scopes are missing
+- Go to Shopify Admin > Settings > Apps and sales channels > [Your App] > Configuration
+- Add the required scopes and reinstall the app
 
 ## API Compliance
 
 This server has been thoroughly validated against the Shopify Admin GraphQL API specification:
 
-- ✅ **34 tools validated** - All GraphQL operations comply with current Shopify Admin API
+- ✅ **35 tools validated** - All GraphQL operations comply with current Shopify Admin API
 - ✅ **API version 2023-07** - Default version, configurable per store
 - ✅ **Comprehensive validation** - All mutations and queries have been verified using Shopify's schema validation tools
 
