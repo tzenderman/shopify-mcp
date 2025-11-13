@@ -142,22 +142,26 @@ async function verifyOAuthToken(token: string): Promise<any | null> {
 async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   // Skip auth for health check, OAuth discovery, and CORS preflight
   if (req.path === '/health' || req.path.startsWith('/.well-known/') || req.method === 'OPTIONS') {
+    console.log(`[AUTH] Skipping auth for ${req.method} ${req.path}`);
     return next();
   }
 
   // Require OAuth for /mcp endpoints
   if (req.path.startsWith('/mcp')) {
+    console.log(`[AUTH] Processing /mcp request - Method: ${req.method}, Session-ID: ${req.headers['mcp-session-id'] || 'none'}`);
+
     if (!AUTH0_DOMAIN) {
-      console.error('AUTH0_DOMAIN not configured - OAuth required');
+      console.error('[AUTH] AUTH0_DOMAIN not configured - OAuth required');
       res.status(500).send('Server misconfigured');
       return;
     }
 
     const authHeader = req.headers.authorization || '';
     const token = authHeader.replace('Bearer ', '').trim();
+    const tokenPreview = token ? `${token.substring(0, 10)}...` : 'none';
 
     if (!token) {
-      console.warn('No authorization token provided');
+      console.warn(`[AUTH] No authorization token provided for ${req.method} ${req.path} from ${req.ip}`);
       // RFC9728: Include WWW-Authenticate header with resource metadata URL
       res.setHeader(
         'WWW-Authenticate',
@@ -166,6 +170,8 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction): 
       res.status(401).send('Unauthorized - No token');
       return;
     }
+
+    console.log(`[AUTH] Token present: ${tokenPreview}, validating...`);
 
     // Verify OAuth token
     console.debug(`Validating OAuth token for request from ${req.ip}`);
@@ -193,6 +199,14 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction): 
 
 // Create Express app
 const app = express();
+
+// Add request logging middleware BEFORE everything else
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path} - IP: ${req.ip} - User-Agent: ${req.headers['user-agent']?.substring(0, 100)}`);
+  next();
+});
+
 app.use(express.json());
 
 // Add CORS middleware
@@ -302,9 +316,12 @@ const transports: Map<string, StreamableHTTPServerTransport> = new Map();
 // MCP POST endpoint
 app.post('/mcp', async (req, res) => {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
+  const method = req.body?.method || 'unknown';
+
+  console.log(`[MCP POST] Session: ${sessionId || 'new'}, Method: ${method}`);
 
   if (sessionId) {
-    console.log(`Received MCP request for session: ${sessionId}`);
+    console.log(`[MCP POST] Using existing session: ${sessionId}`);
   }
 
   try {
@@ -413,9 +430,22 @@ app.delete('/mcp', async (req, res) => {
 const PORT = parseInt(process.env.PORT || '8000', 10);
 
 app.listen(PORT, () => {
+  console.log(`\n========================================`);
   console.log(`Shopify MCP HTTP Server listening on port ${PORT}`);
+  console.log(`========================================`);
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`MCP endpoint: http://localhost:${PORT}/mcp`);
+  console.log(`\nConfiguration:`);
+  console.log(`  - OAuth Enabled: ${AUTH0_DOMAIN ? 'YES' : 'NO'}`);
+  if (AUTH0_DOMAIN) {
+    console.log(`  - Auth0 Domain: ${AUTH0_DOMAIN}`);
+    console.log(`  - Auth0 Client ID: ${AUTH0_CLIENT_ID ? AUTH0_CLIENT_ID.substring(0, 10) + '...' : 'NOT SET'}`);
+    console.log(`  - Auth0 Audience: ${AUTH0_AUDIENCE || 'NOT SET'}`);
+  }
+  console.log(`  - MCP Server URL: ${MCP_SERVER_URL}`);
+  console.log(`  - Token Cache TTL: ${TOKEN_CACHE_TTL / 1000}s`);
+  console.log(`  - Token Cache Max Size: ${TOKEN_CACHE_MAX_SIZE}`);
+  console.log(`========================================\n`);
 });
 
 // Handle shutdown
