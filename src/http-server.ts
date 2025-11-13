@@ -350,9 +350,15 @@ app.post('/mcp', async (req, res) => {
       };
 
       // Connect the transport to the MCP server
+      console.log(`[MCP POST] Creating new MCP server instance for session`);
       const server = createShopifyMcpServer();
+      console.log(`[MCP POST] Connecting transport to server`);
       await server.connect(transport);
+      console.log(`[MCP POST] About to call transport.handleRequest for initialize`);
+      const initStartTime = Date.now();
       await transport.handleRequest(req as any, res as any, req.body);
+      const initDuration = Date.now() - initStartTime;
+      console.log(`[MCP POST] Completed initialize in ${initDuration}ms`);
       return;
     } else {
       // Invalid request
@@ -368,9 +374,13 @@ app.post('/mcp', async (req, res) => {
     }
 
     // Handle the request with existing transport
+    console.log(`[MCP POST] About to call transport.handleRequest for ${method}`);
+    const startTime = Date.now();
     await transport.handleRequest(req as any, res as any, req.body);
+    const duration = Date.now() - startTime;
+    console.log(`[MCP POST] Completed transport.handleRequest for ${method} in ${duration}ms`);
   } catch (error) {
-    console.error('Error handling MCP request:', error);
+    console.error(`[MCP POST] Error handling MCP request for ${method}:`, error);
     if (!res.headersSent) {
       res.status(500).json({
         jsonrpc: '2.0',
