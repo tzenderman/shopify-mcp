@@ -405,10 +405,21 @@ app.get('/mcp', async (req, res) => {
 
   const lastEventId = req.headers['last-event-id'] as string | undefined;
   if (lastEventId) {
-    console.log(`Client reconnecting with Last-Event-ID: ${lastEventId}`);
+    console.log(`[SSE] Client reconnecting with Last-Event-ID: ${lastEventId}`);
   } else {
-    console.log(`Establishing new SSE stream for session ${sessionId}`);
+    console.log(`[SSE] Establishing new SSE stream for session ${sessionId}`);
   }
+
+  // Intercept res.write to log SSE data
+  const originalWrite = res.write.bind(res);
+  (res as any).write = function(chunk: any, ...args: any[]) {
+    if (chunk) {
+      const str = chunk.toString();
+      const preview = str.length > 200 ? str.substring(0, 200) + '...' : str;
+      console.log(`[SSE] Writing ${str.length} bytes to stream:`, preview);
+    }
+    return originalWrite(chunk, ...args);
+  };
 
   const transport = transports.get(sessionId)!;
   await transport.handleRequest(req as any, res as any);
