@@ -31,7 +31,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.1",
+    "@modelcontextprotocol/sdk": "^1.21.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/minimist": "^1.2.2",
